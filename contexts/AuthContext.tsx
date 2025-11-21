@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { StorageService, User } from "@/utils/storage";
+import { ApiService } from "@/utils/api";
 
 interface AuthContextType {
   user: User | null;
@@ -18,23 +19,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     loadUser();
-    initializeSampleData();
-    setUserOnlineStatus();
   }, []);
 
   useEffect(() => {
     if (!user) return;
-    const interval = setInterval(() => {
-      StorageService.setUserStatus(user.id, "online");
-    }, 5000);
-    return () => clearInterval(interval);
+    const socket = ApiService.getSocket();
+    if (socket) {
+      ApiService.emitUserOnline(user.id);
+    }
   }, [user]);
 
   const loadUser = async () => {
     try {
-      const userData = await StorageService.getUser();
-      if (userData) {
-        setUser(userData);
+      const token = await ApiService.restoreToken();
+      if (token) {
+        const userData = await StorageService.getUser();
+        if (userData) {
+          setUser(userData);
+        }
       }
     } catch (error) {
       console.error("Failed to load user:", error);
@@ -43,53 +45,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const initializeSampleData = async () => {
-    const existingUsers = await StorageService.getAllUsers();
-    if (existingUsers.length === 0) {
-      const sampleUsers: User[] = [
-        { id: "1", username: "alex_dev", displayName: "Alex Developer" },
-        { id: "2", username: "sarah_design", displayName: "Sarah Designer" },
-        { id: "3", username: "mike_pm", displayName: "Mike Product" },
-        { id: "4", username: "emily_eng", displayName: "Emily Engineer" },
-        { id: "5", username: "chris_ops", displayName: "Chris DevOps" },
-      ];
-      await StorageService.setAllUsers(sampleUsers);
-    }
-  };
-
   const signIn = async (username: string, password: string) => {
-    const newUser: User = {
-      id: Date.now().toString(),
-      username,
-      displayName: username,
-    };
-    await StorageService.setUser(newUser);
-    setUser(newUser);
+    try {
+      const response = await ApiService.login(username, password);
+      if (response.user) {
+        const newUser: User = {
+          id: response.user.id,
+          username: response.user.username,
+          displayName: response.user.display_name || response.user.username,
+          bio: response.user.bio,
+        };
+        await StorageService.setUser(newUser);
+        setUser(newUser);
+      }
+    } catch (error) {
+      throw error;
+    }
   };
 
   const signUp = async (username: string, displayName: string, password: string) => {
-    const newUser: User = {
-      id: Date.now().toString(),
-      username,
-      displayName,
-    };
-    await StorageService.setUser(newUser);
-    setUser(newUser);
+    try {
+      const response = await ApiService.register(username, displayName, password);
+      if (response.user) {
+        const newUser: User = {
+          id: response.user.id,
+          username: response.user.username,
+          displayName: response.user.display_name || displayName,
+        };
+        await StorageService.setUser(newUser);
+        setUser(newUser);
+      }
+    } catch (error) {
+      throw error;
+    }
   };
 
   const signOut = async () => {
-    if (user) {
-      await StorageService.setUserStatus(user.id, "offline");
-    }
+    await ApiService.logout();
     await StorageService.removeUser();
     setUser(null);
-  };
-
-  const setUserOnlineStatus = async () => {
-    const userData = await StorageService.getUser();
-    if (userData) {
-      await StorageService.setUserStatus(userData.id, "online");
-    }
   };
 
   const updateUser = async (updates: Partial<User>) => {
