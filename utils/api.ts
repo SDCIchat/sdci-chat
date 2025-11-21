@@ -4,15 +4,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Determine backend URL based on environment
 let BACKEND_URL: string;
 
-if (typeof window !== 'undefined') {
+// Check for environment variable first (for deployed backend)
+const envBackendUrl = process.env.EXPO_PUBLIC_BACKEND_URL;
+
+if (envBackendUrl) {
+  // Use deployed backend URL from environment
+  BACKEND_URL = envBackendUrl;
+} else if (typeof window !== 'undefined') {
   // Browser environment - use the same domain but different port
   const host = window.location.hostname;
   BACKEND_URL = `http://${host}:4000`;
 } else {
-  // Native environment (Expo) - for Android emulator use 10.0.2.2, for real devices use your computer's IP
-  // For Android emulator: 10.0.2.2 is the special hostname that refers to the host machine
-  // For real device: replace with your computer's actual IP address (e.g., http://192.168.x.x:4000)
-  BACKEND_URL = 'http://10.0.2.2:4000';
+  // Native environment (Expo) - default to localhost for development
+  // In production, set EXPO_PUBLIC_BACKEND_URL environment variable
+  BACKEND_URL = 'http://localhost:4000';
 }
 
 const API_TIMEOUT = 10000;
