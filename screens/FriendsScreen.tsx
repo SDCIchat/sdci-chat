@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { StorageService, Friend, FriendRequest } from "@/utils/storage";
+import { ApiService } from "@/utils/api";
 import { Spacing, Typography } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
@@ -38,21 +39,30 @@ export default function FriendsScreen() {
   };
 
   const acceptRequest = async (request: FriendRequest) => {
-    const newFriend: Friend = {
-      id: request.fromUserId,
-      username: request.fromUsername,
-      displayName: request.fromDisplayName,
-      avatar: request.fromAvatar,
-      status: "online",
-    };
-    await StorageService.addFriend(newFriend);
-    await StorageService.removeFriendRequest(request.id);
-    loadData();
+    try {
+      await ApiService.acceptFriendRequest(request.id);
+      const newFriend: Friend = {
+        id: request.fromUserId,
+        username: request.fromUsername,
+        displayName: request.fromDisplayName,
+        avatar: request.fromAvatar,
+        status: "online",
+      };
+      await StorageService.addFriend(newFriend);
+      await StorageService.removeFriendRequest(request.id);
+      loadData();
+    } catch (error) {
+      console.error("Failed to accept request:", error);
+    }
   };
 
   const declineRequest = async (requestId: string) => {
-    await StorageService.removeFriendRequest(requestId);
-    loadData();
+    try {
+      await StorageService.removeFriendRequest(requestId);
+      loadData();
+    } catch (error) {
+      console.error("Failed to decline request:", error);
+    }
   };
 
   const renderRequest = ({ item }: { item: FriendRequest }) => (

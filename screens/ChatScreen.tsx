@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
 import { StorageService, Message } from "@/utils/storage";
+import { ApiService } from "@/utils/api";
 import { Spacing } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
@@ -26,6 +27,34 @@ export default function ChatScreen() {
   useEffect(() => {
     loadMessages();
     markConversationRead();
+    const socket = ApiService.getSocket();
+    if (socket) {
+      ApiService.onMessageReceived((msg: any) => {
+        if (msg.conversation_id === conversationId) {
+          const newMsg: Message = {
+            id: msg.id.toString(),
+            conversationId: msg.conversation_id,
+            senderId: msg.sender_id.toString(),
+            senderName: msg.sender_name || "User",
+            text: msg.text,
+            timestamp: new Date(msg.created_at).getTime(),
+          };
+          setMessages((prev) => [...prev, newMsg]);
+        }
+      });
+      ApiService.onUserTyping((data: any) => {
+        if (data.conversationId === conversationId) {
+          setTypingUsers((prev) => new Set([...prev, data.userId]));
+          setTimeout(() => {
+            setTypingUsers((prev) => {
+              const newSet = new Set(prev);
+              newSet.delete(data.userId);
+              return newSet;
+            });
+          }, 2000);
+        }
+      });
+    }
   }, [conversationId]);
 
   const markConversationRead = async () => {
@@ -45,39 +74,12 @@ export default function ChatScreen() {
   const sendMessage = async () => {
     if (!inputText.trim() || !user) return;
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      conversationId,
-      senderId: user.id,
-      senderName: user.displayName,
-      text: inputText.trim(),
-      timestamp: Date.now(),
-      readBy: [user.id],
-    };
-
-    await StorageService.addMessage(conversationId, newMessage);
-    await StorageService.updateConversation(conversationId, {
-      lastMessage: newMessage,
-    });
-    setMessages([...messages, newMessage]);
-    setInputText("");
-    setTypingUsers(new Set());
-  };
-
-  const simulateTypingIndicator = () => {
-    const otherUserId = conversationId.split("_").find((id) => id !== user?.id);
-    if (otherUserId && Math.random() > 0.7) {
-      setTypingUsers((prev) => new Set([...prev, otherUserId]));
-      setTimeout(
-        () => {
-          setTypingUsers((prev) => {
-            const newSet = new Set(prev);
-            newSet.delete(otherUserId);
-            return newSet;
-          });
-        },
-        2000 + Math.random() * 2000
-      );
+    try {
+      ApiService.emitSendMessage(conversationId, user.id, inputText.trim());
+      setInputText("");
+      setTypingUsers(new Set());
+    } catch (error) {
+      console.error("Failed to send message:", error);
     }
   };
 
