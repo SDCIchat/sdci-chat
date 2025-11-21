@@ -50,6 +50,10 @@ export interface Conversation {
   unreadCount: number;
   participants: string[];
   avatar?: string;
+  isClassGroup?: boolean;
+  period?: string;
+  subject?: string;
+  teacher?: string;
 }
 
 const KEYS = {
@@ -194,6 +198,30 @@ export const StorageService = {
       if (!message.readBy.includes(userId)) {
         message.readBy.push(userId);
         await this.setMessages(conversationId, messages);
+      }
+    }
+  },
+
+  async getClassGroups(): Promise<Conversation[]> {
+    const conversations = await this.getConversations();
+    return conversations.filter((c) => c.isClassGroup);
+  },
+
+  async removeConversation(conversationId: string): Promise<void> {
+    const conversations = await this.getConversations();
+    const filtered = conversations.filter((c) => c.id !== conversationId);
+    await this.setConversations(filtered);
+    await AsyncStorage.removeItem(`${KEYS.MESSAGES}_${conversationId}`);
+  },
+
+  async removeUserFromConversation(conversationId: string, userId: string): Promise<void> {
+    const conversation = await this.getConversation(conversationId);
+    if (conversation) {
+      conversation.participants = conversation.participants.filter((id) => id !== userId);
+      if (conversation.participants.length === 0) {
+        await this.removeConversation(conversationId);
+      } else {
+        await this.updateConversation(conversationId, conversation);
       }
     }
   },
