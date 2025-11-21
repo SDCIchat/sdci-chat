@@ -9,7 +9,8 @@ import { Button } from "@/components/Button";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { StorageService, User, FriendRequest } from "@/utils/storage";
+import { StorageService, User, FriendRequest, Friend } from "@/utils/storage";
+import { ApiService } from "@/utils/api";
 import { Spacing, Typography } from "@/constants/theme";
 
 export default function UserSearchScreen() {
@@ -18,57 +19,60 @@ export default function UserSearchScreen() {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState("");
-  const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
   const [sentRequests, setSentRequests] = useState<Set<string>>(new Set());
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
-    loadUsers();
-  }, []);
-
-  useEffect(() => {
-    if (searchQuery.trim()) {
-      const filtered = allUsers.filter(
-        (u) =>
-          u.id !== user?.id &&
-          (u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            u.displayName.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-      setFilteredUsers(filtered);
+    if (searchQuery.trim().length > 0) {
+      searchUsers();
     } else {
       setFilteredUsers([]);
     }
-  }, [searchQuery, allUsers, user]);
+  }, [searchQuery]);
 
-  const loadUsers = async () => {
-    const users = await StorageService.getAllUsers();
-    setAllUsers(users);
+  const searchUsers = async () => {
+    if (!searchQuery.trim()) return;
+    try {
+      setIsSearching(true);
+      const results = await ApiService.searchUsers(searchQuery);
+      setFilteredUsers(results.filter((u: any) => u.id !== parseInt(user?.id || "0")));
+    } catch (error) {
+      console.error("Search failed:", error);
+      setFilteredUsers([]);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
-  const sendFriendRequest = async (toUser: User) => {
+  const sendFriendRequest = async (toUser: any) => {
     if (!user) return;
 
-    const request: FriendRequest = {
-      id: Date.now().toString(),
-      fromUserId: user.id,
-      fromUsername: user.username,
-      fromDisplayName: user.displayName,
-      timestamp: Date.now(),
-    };
-
-    await StorageService.addFriendRequest(request);
-    setSentRequests(new Set([...sentRequests, toUser.id]));
-    Alert.alert("Success", `Friend request sent to ${toUser.displayName}`);
+    try {
+      await ApiService.sendFriendRequest(toUser.id);
+      const newFriend: Friend = {
+        id: toUser.id.toString(),
+        username: toUser.username,
+        displayName: toUser.display_name || toUser.username,
+        status: toUser.status || "offline",
+      };
+      await StorageService.addFriend(newFriend);
+      setSentRequests(new Set([...sentRequests, toUser.id.toString()]));
+      Alert.alert("Success", `Friend request sent to ${toUser.display_name || toUser.username}`);
+    } catch (error) {
+      console.error("Failed to send friend request:", error);
+      Alert.alert("Error", "Failed to send friend request");
+    }
   };
 
-  const renderUser = ({ item }: { item: User }) => {
-    const requestSent = sentRequests.has(item.id);
+  const renderUser = ({ item }: { item: any }) => {
+    const requestSent = sentRequests.has(item.id.toString());
 
     return (
       <View style={[styles.userRow, { borderBottomColor: theme.border }]}>
-        <Avatar name={item.displayName} size={48} />
+        <Avatar name={item.display_name || item.username} size={48} />
         <View style={styles.userInfo}>
-          <ThemedText style={styles.userName}>{item.displayName}</ThemedText>
+          <ThemedText style={styles.userName}>{item.display_name || item.username}</ThemedText>
           <ThemedText style={styles.userUsername}>@{item.username}</ThemedText>
         </View>
         <Button
@@ -102,7 +106,12 @@ export default function UserSearchScreen() {
         </View>
       </View>
 
-      {filteredUsers.length === 0 && searchQuery.trim() ? (
+      {isSearching ? (
+        <View style={styles.emptyState}>
+          <Feather name="search" size={64} color={theme.textSecondary} />
+          <ThemedText style={styles.emptyText}>Searching...</ThemedText>
+        </View>
+      ) : filteredUsers.length === 0 && searchQuery.trim() ? (
         <View style={styles.emptyState}>
           <Feather name="search" size={64} color={theme.textSecondary} />
           <ThemedText style={styles.emptyText}>No users found</ThemedText>
@@ -114,7 +123,7 @@ export default function UserSearchScreen() {
         <FlatList
           data={filteredUsers}
           renderItem={renderUser}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + Spacing.xl }]}
         />
       )}
