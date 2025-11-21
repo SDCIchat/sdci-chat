@@ -2,7 +2,6 @@ import io, { Socket } from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Determine backend URL based on environment
-// In Replit browser, we need to use the full domain since localhost won't work
 let BACKEND_URL: string;
 
 if (typeof window !== 'undefined') {
@@ -10,8 +9,10 @@ if (typeof window !== 'undefined') {
   const host = window.location.hostname;
   BACKEND_URL = `http://${host}:4000`;
 } else {
-  // Native environment (Expo Go) - use localhost
-  BACKEND_URL = 'http://localhost:4000';
+  // Native environment (Expo) - for Android emulator use 10.0.2.2, for real devices use your computer's IP
+  // For Android emulator: 10.0.2.2 is the special hostname that refers to the host machine
+  // For real device: replace with your computer's actual IP address (e.g., http://192.168.x.x:4000)
+  BACKEND_URL = 'http://10.0.2.2:4000';
 }
 
 const API_TIMEOUT = 10000;
