@@ -28,6 +28,10 @@ externalPort = 3003
 localPort = 36429
 externalPort = 3001
 
+[[ports]]
+localPort = 42899
+externalPort = 4200
+
 [workflows]
 runButton = "Project"
 
@@ -99,3 +103,8 @@ value = "1"
 path = "/*"
 name = "expo-sfv-version"
 value = "0"
+
+[userenv]
+
+[userenv.shared]
+EXPO_PUBLIC_BACKEND_URL = "https://sdci-chat-backend.onrender.com"
