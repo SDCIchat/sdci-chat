@@ -8,10 +8,10 @@ let BACKEND_URL: string;
 if (typeof window !== 'undefined') {
   // Browser environment - use the same domain but different port
   const host = window.location.hostname;
-  BACKEND_URL = `http://${host}:3000`;
+  BACKEND_URL = `http://${host}:4000`;
 } else {
   // Native environment (Expo Go) - use localhost
-  BACKEND_URL = 'http://localhost:3000';
+  BACKEND_URL = 'http://localhost:4000';
 }
 
 const API_TIMEOUT = 10000;
