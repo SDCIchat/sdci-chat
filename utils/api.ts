@@ -1,11 +1,19 @@
 import io, { Socket } from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Use localhost:3000 for development (works when backend is running on same machine)
-// For web browser access, the backend must be on the same port or use a proxy
-const BACKEND_URL = 'http://localhost:3000';
+// Determine backend URL based on environment
+// In Replit browser, we need to use the full domain since localhost won't work
+let BACKEND_URL: string;
 
-// Fallback for common development scenarios
+if (typeof window !== 'undefined') {
+  // Browser environment - use the same domain but different port
+  const host = window.location.hostname;
+  BACKEND_URL = `http://${host}:3000`;
+} else {
+  // Native environment (Expo Go) - use localhost
+  BACKEND_URL = 'http://localhost:3000';
+}
+
 const API_TIMEOUT = 10000;
 let socket: Socket | null = null;
 let token: string | null = null;
