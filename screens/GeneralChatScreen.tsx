@@ -77,7 +77,7 @@ export default function GeneralChatScreen() {
           style={styles.icon}
           resizeMode="contain"
         />
-        <ThemedText style={styles.headerTitle}>sdci chat</ThemedText>
+        <ThemedText style={styles.headerTitle}>SDCI chat</ThemedText>
       </View>
 
       <FlatList

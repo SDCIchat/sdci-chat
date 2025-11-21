@@ -25,7 +25,7 @@ export default function WelcomeScreen() {
           style={styles.logo}
           resizeMode="contain"
         />
-        <ThemedText style={styles.title}>sdci chat</ThemedText>
+        <ThemedText style={styles.title}>SDCI chat</ThemedText>
         <ThemedText style={styles.tagline}>
           Connect with friends, chat in groups, and join the conversation
         </ThemedText>

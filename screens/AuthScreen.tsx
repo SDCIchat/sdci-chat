@@ -58,7 +58,7 @@ export default function AuthScreen() {
           <ThemedText style={styles.subtitle}>
             {mode === "signin"
               ? "Sign in to continue chatting"
-              : "Join the sdci chat community"}
+              : "Join the SDCI chat community"}
           </ThemedText>
         </View>
 
