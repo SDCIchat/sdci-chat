@@ -1,7 +1,12 @@
 import io, { Socket } from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Use localhost:3000 for development (works when backend is running on same machine)
+// For web browser access, the backend must be on the same port or use a proxy
 const BACKEND_URL = 'http://localhost:3000';
+
+// Fallback for common development scenarios
+const API_TIMEOUT = 10000;
 let socket: Socket | null = null;
 let token: string | null = null;
 
@@ -9,11 +14,23 @@ export const ApiService = {
   // Auth
   async register(username: string, displayName: string, password: string) {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+      
       const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, displayName, password }),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Registration failed');
+      }
+      
       const data = await response.json();
       if (data.token) {
         token = data.token;
@@ -21,18 +38,31 @@ export const ApiService = {
         this.connectSocket();
       }
       return data;
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      console.error('Registration error:', error.message);
+      throw new Error(error.message || 'Failed to connect to server. Make sure the backend is running on localhost:3000');
     }
   },
 
   async login(username: string, password: string) {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+      
       const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Login failed');
+      }
+      
       const data = await response.json();
       if (data.token) {
         token = data.token;
@@ -40,8 +70,9 @@ export const ApiService = {
         this.connectSocket();
       }
       return data;
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      console.error('Login error:', error.message);
+      throw new Error(error.message || 'Failed to connect to server. Make sure the backend is running on localhost:3000');
     }
   },
 

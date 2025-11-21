@@ -41,8 +41,10 @@ export default function AuthScreen() {
       } else {
         await signUp(username, displayName, password);
       }
-    } catch (error) {
-      Alert.alert("Error", "Authentication failed. Please try again.");
+    } catch (error: any) {
+      const errorMessage = error.message || "Authentication failed. Please try again.";
+      console.error("Auth error:", errorMessage);
+      Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
     }
