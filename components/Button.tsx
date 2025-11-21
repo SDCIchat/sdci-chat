@@ -13,9 +13,11 @@ import { BorderRadius, Spacing } from "@/constants/theme";
 
 interface ButtonProps {
   onPress?: () => void;
-  children: ReactNode;
+  children?: ReactNode;
+  title?: string;
   style?: StyleProp<ViewStyle>;
   disabled?: boolean;
+  variant?: "primary" | "outline";
 }
 
 const springConfig: WithSpringConfig = {
@@ -31,8 +33,10 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export function Button({
   onPress,
   children,
+  title,
   style,
   disabled = false,
+  variant = "primary",
 }: ButtonProps) {
   const { theme } = useTheme();
   const scale = useSharedValue(1);
@@ -53,6 +57,8 @@ export function Button({
     }
   };
 
+  const isOutline = variant === "outline";
+
   return (
     <AnimatedPressable
       onPress={disabled ? undefined : onPress}
@@ -62,7 +68,9 @@ export function Button({
       style={[
         styles.button,
         {
-          backgroundColor: theme.link,
+          backgroundColor: isOutline ? "transparent" : theme.link,
+          borderWidth: isOutline ? 2 : 0,
+          borderColor: theme.link,
           opacity: disabled ? 0.5 : 1,
         },
         style,
@@ -71,9 +79,12 @@ export function Button({
     >
       <ThemedText
         type="body"
-        style={[styles.buttonText, { color: theme.buttonText }]}
+        style={[
+          styles.buttonText,
+          { color: isOutline ? theme.link : theme.buttonText },
+        ]}
       >
-        {children}
+        {title || children}
       </ThemedText>
     </AnimatedPressable>
   );
