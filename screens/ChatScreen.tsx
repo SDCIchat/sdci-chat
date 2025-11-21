@@ -21,10 +21,21 @@ export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
+  const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadMessages();
+    markConversationRead();
   }, [conversationId]);
+
+  const markConversationRead = async () => {
+    const msgs = await StorageService.getMessages(conversationId);
+    for (const msg of msgs) {
+      if (msg.senderId !== user?.id && (!msg.readBy || !msg.readBy.includes(user?.id || ""))) {
+        await StorageService.updateMessageReadBy(conversationId, msg.id, user?.id || "");
+      }
+    }
+  };
 
   const loadMessages = async () => {
     const msgs = await StorageService.getMessages(conversationId);
@@ -41,6 +52,7 @@ export default function ChatScreen() {
       senderName: user.displayName,
       text: inputText.trim(),
       timestamp: Date.now(),
+      readBy: [user.id],
     };
 
     await StorageService.addMessage(conversationId, newMessage);
@@ -49,15 +61,42 @@ export default function ChatScreen() {
     });
     setMessages([...messages, newMessage]);
     setInputText("");
+    setTypingUsers(new Set());
   };
 
-  const renderMessage = ({ item }: { item: Message }) => (
-    <MessageBubble
-      message={item}
-      isOwn={item.senderId === user?.id}
-      showSender={isGroup && !item.isSystem && item.senderId !== user?.id}
-    />
-  );
+  const simulateTypingIndicator = () => {
+    const otherUserId = conversationId.split("_").find((id) => id !== user?.id);
+    if (otherUserId && Math.random() > 0.7) {
+      setTypingUsers((prev) => new Set([...prev, otherUserId]));
+      setTimeout(
+        () => {
+          setTypingUsers((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(otherUserId);
+            return newSet;
+          });
+        },
+        2000 + Math.random() * 2000
+      );
+    }
+  };
+
+  const renderMessage = ({ item }: { item: Message }) => {
+    const allReadByOthers =
+      item.senderId === user?.id &&
+      item.readBy &&
+      item.readBy.length > 1 &&
+      item.readBy.includes(user.id);
+
+    return (
+      <MessageBubble
+        message={item}
+        isOwn={item.senderId === user?.id}
+        showSender={isGroup && !item.isSystem && item.senderId !== user?.id}
+        isRead={allReadByOthers}
+      />
+    );
+  };
 
   return (
     <ThemedView style={styles.container}>

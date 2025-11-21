@@ -33,6 +33,13 @@ export interface Message {
   text: string;
   timestamp: number;
   isSystem?: boolean;
+  readBy?: string[];
+}
+
+export interface TypingIndicator {
+  conversationId: string;
+  userId: string;
+  username: string;
 }
 
 export interface Conversation {
@@ -52,6 +59,7 @@ const KEYS = {
   CONVERSATIONS: "@conversations",
   MESSAGES: "@messages",
   ALL_USERS: "@all_users",
+  USER_STATUS: "@user_status",
 };
 
 export const StorageService = {
@@ -165,5 +173,28 @@ export const StorageService = {
 
   async clearAllData(): Promise<void> {
     await AsyncStorage.clear();
+  },
+
+  async getUserStatus(userId: string): Promise<"online" | "offline"> {
+    const data = await AsyncStorage.getItem(`${KEYS.USER_STATUS}_${userId}`);
+    return data ? JSON.parse(data) : "offline";
+  },
+
+  async setUserStatus(userId: string, status: "online" | "offline"): Promise<void> {
+    await AsyncStorage.setItem(`${KEYS.USER_STATUS}_${userId}`, JSON.stringify(status));
+  },
+
+  async updateMessageReadBy(conversationId: string, messageId: string, userId: string): Promise<void> {
+    const messages = await this.getMessages(conversationId);
+    const message = messages.find((m) => m.id === messageId);
+    if (message) {
+      if (!message.readBy) {
+        message.readBy = [];
+      }
+      if (!message.readBy.includes(userId)) {
+        message.readBy.push(userId);
+        await this.setMessages(conversationId, messages);
+      }
+    }
   },
 };

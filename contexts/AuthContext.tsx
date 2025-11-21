@@ -19,7 +19,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     loadUser();
     initializeSampleData();
+    setUserOnlineStatus();
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => {
+      StorageService.setUserStatus(user.id, "online");
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const loadUser = async () => {
     try {
@@ -69,8 +78,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    if (user) {
+      await StorageService.setUserStatus(user.id, "offline");
+    }
     await StorageService.removeUser();
     setUser(null);
+  };
+
+  const setUserOnlineStatus = async () => {
+    const userData = await StorageService.getUser();
+    if (userData) {
+      await StorageService.setUserStatus(userData.id, "online");
+    }
   };
 
   const updateUser = async (updates: Partial<User>) => {
