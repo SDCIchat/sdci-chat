@@ -17,8 +17,20 @@ app.use(cors());
 app.use(express.json());
 
 // Database connection
+if (!process.env.DATABASE_URL) {
+  console.error('ERROR: DATABASE_URL environment variable is not set!');
+  console.error('On Render, make sure to:');
+  console.error('1. Create a PostgreSQL database');
+  console.error('2. Add DATABASE_URL to the web service environment variables');
+  process.exit(1);
+}
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+});
+
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err);
 });
 
 // JWT Secret
