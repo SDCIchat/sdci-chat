@@ -253,9 +253,14 @@ io.on('connection', (socket) => {
 });
 
 // Initialize and start server
-initializeDatabase().then(() => {
-  const PORT = process.env.PORT || 4000;
-  server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+const PORT = process.env.PORT || 4000;
+
+// Start server immediately
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+// Initialize database asynchronously
+initializeDatabase().catch(err => {
+  console.error('Failed to initialize database:', err);
 });
