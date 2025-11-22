@@ -20,7 +20,7 @@ if (envBackendUrl) {
   BACKEND_URL = 'http://localhost:4000';
 }
 
-const API_TIMEOUT = 10000;
+const API_TIMEOUT = 30000;
 let socket: Socket | null = null;
 let token: string | null = null;
 
