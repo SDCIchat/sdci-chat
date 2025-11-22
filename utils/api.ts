@@ -20,14 +20,26 @@ if (envBackendUrl) {
   BACKEND_URL = 'http://localhost:4000';
 }
 
+console.log('API Service initialized. Backend URL:', BACKEND_URL);
+
 const API_TIMEOUT = 30000;
 let socket: Socket | null = null;
 let token: string | null = null;
+
+const parseJSON = async (response: Response) => {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    throw new Error(`Server response is not valid JSON. Received: ${text.substring(0, 100)}`);
+  }
+};
 
 export const ApiService = {
   // Auth
   async register(username: string, displayName: string, password: string) {
     try {
+      console.log('Attempting to register at:', `${BACKEND_URL}/api/auth/register`);
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
       
@@ -41,11 +53,11 @@ export const ApiService = {
       clearTimeout(timeoutId);
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Registration failed');
+        const errorData = await parseJSON(response);
+        throw new Error(errorData.error || `Registration failed with status ${response.status}`);
       }
       
-      const data = await response.json();
+      const data = await parseJSON(response);
       if (data.token) {
         token = data.token;
         await AsyncStorage.setItem('auth_token', data.token);
@@ -54,12 +66,13 @@ export const ApiService = {
       return data;
     } catch (error: any) {
       console.error('Registration error:', error.message);
-      throw new Error(error.message || 'Failed to connect to server. Make sure the backend is running on localhost:3000');
+      throw new Error(error.message || 'Failed to connect to backend. Check that it is deployed on Render and running.');
     }
   },
 
   async login(username: string, password: string) {
     try {
+      console.log('Attempting to login at:', `${BACKEND_URL}/api/auth/login`);
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
       
@@ -73,11 +86,11 @@ export const ApiService = {
       clearTimeout(timeoutId);
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Login failed');
+        const errorData = await parseJSON(response);
+        throw new Error(errorData.error || `Login failed with status ${response.status}`);
       }
       
-      const data = await response.json();
+      const data = await parseJSON(response);
       if (data.token) {
         token = data.token;
         await AsyncStorage.setItem('auth_token', data.token);
@@ -86,7 +99,7 @@ export const ApiService = {
       return data;
     } catch (error: any) {
       console.error('Login error:', error.message);
-      throw new Error(error.message || 'Failed to connect to server. Make sure the backend is running on localhost:3000');
+      throw new Error(error.message || 'Failed to connect to backend. Check that it is deployed on Render and running.');
     }
   },
 
