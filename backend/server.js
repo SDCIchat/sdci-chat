@@ -16,6 +16,11 @@ const io = socketio(server, {
 app.use(cors());
 app.use(express.json());
 
+// Health check endpoint - responds immediately
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
 // Database connection
 if (!process.env.DATABASE_URL) {
   console.error('ERROR: DATABASE_URL environment variable is not set!');
@@ -30,7 +35,16 @@ const pool = new Pool({
 });
 
 pool.on('error', (err) => {
-  console.error('Unexpected error on idle client', err);
+  console.error('Pool error:', err);
+});
+
+// Handle uncaught errors
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
 // JWT Secret
