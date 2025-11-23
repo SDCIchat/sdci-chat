@@ -21,7 +21,7 @@ export default function WelcomeScreen() {
     >
       <View style={styles.content}>
         <Image
-          source={require("../assets/icon.png")}
+          source={require("../assets/images/icon.png")}
           style={styles.logo}
           resizeMode="contain"
         />
