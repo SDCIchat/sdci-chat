@@ -76,7 +76,22 @@ export default function ChatScreen() {
   const sendMessage = async () => {
     if (!inputText.trim() || !user) return;
 
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      conversationId,
+      senderId: user.id,
+      senderName: user.displayName,
+      text: inputText.trim(),
+      timestamp: Date.now(),
+    };
+
     try {
+      // Add message locally first
+      await StorageService.addMessage(conversationId, newMessage);
+      setMessages((prev) => [...prev, newMessage]);
+      setLastMessageId(newMessage.id);
+      
+      // Then emit to server
       ApiService.emitSendMessage(conversationId, user.id, inputText.trim());
       setInputText("");
       setTypingUsers(new Set());
