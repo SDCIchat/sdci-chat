@@ -27,18 +27,17 @@ export default function RootNavigator() {
   }
 
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       {user === null ? (
         <>
           <Stack.Screen
             name="Welcome"
             component={WelcomeScreen}
-            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="Auth"
             component={AuthScreen}
-            options={{ headerShown: false, presentation: "modal" }}
+            options={{ presentation: "modal" }}
           />
         </>
       ) : (
@@ -46,7 +45,6 @@ export default function RootNavigator() {
           <Stack.Screen
             name="Main"
             component={MainTabNavigator}
-            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="UserSearch"
@@ -54,6 +52,7 @@ export default function RootNavigator() {
             options={{
               title: "Find Friends",
               presentation: "modal",
+              headerShown: true,
             }}
           />
           <Stack.Screen
@@ -61,6 +60,7 @@ export default function RootNavigator() {
             component={ChatScreen}
             options={({ route }) => ({
               title: route.params.conversationName,
+              headerShown: true,
             })}
           />
           <Stack.Screen
@@ -69,6 +69,7 @@ export default function RootNavigator() {
             options={{
               title: "New Group",
               presentation: "modal",
+              headerShown: true,
             }}
           />
         </>
