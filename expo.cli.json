@@ -1,5 +1,6 @@
 {
   "tunnel": {
     "enabled": false
-  }
+  },
+  "port": 8082
 }
