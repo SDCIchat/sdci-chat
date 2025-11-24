@@ -77,7 +77,7 @@ export default function MessagesScreen() {
       )}
 
       <Pressable
-        onPress={() => navigation.navigate("CreateGroup")}
+        onPress={() => navigation.navigate("UserSearch")}
         style={[
           styles.fab,
           {
@@ -86,7 +86,7 @@ export default function MessagesScreen() {
           },
         ]}
       >
-        <Feather name="edit" size={24} color="#FFFFFF" />
+        <Feather name="message-square" size={24} color="#FFFFFF" />
       </Pressable>
     </ThemedView>
   );

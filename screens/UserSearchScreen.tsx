@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, StyleSheet, TextInput, FlatList, Pressable, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -12,9 +13,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { StorageService, User, FriendRequest, Friend } from "@/utils/storage";
 import { ApiService } from "@/utils/api";
 import { Spacing, Typography } from "@/constants/theme";
+import { RootStackParamList } from "@/navigation/RootNavigator";
+
+type UserSearchScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function UserSearchScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<UserSearchScreenNavigationProp>();
   const { theme } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
@@ -65,6 +69,38 @@ export default function UserSearchScreen() {
     }
   };
 
+  const startDirectMessage = async (toUser: any) => {
+    if (!user) return;
+
+    // Check if conversation already exists
+    const conversations = await StorageService.getConversations();
+    let existingConvo = conversations.find(
+      (c) =>
+        !c.isGroup &&
+        c.participants.includes(user.id) &&
+        c.participants.includes(toUser.id.toString())
+    );
+
+    if (!existingConvo) {
+      // Create new DM conversation
+      const conversationId = `dm_${user.id}_${toUser.id}_${Date.now()}`;
+      existingConvo = {
+        id: conversationId,
+        name: toUser.display_name || toUser.username,
+        isGroup: false,
+        unreadCount: 0,
+        participants: [user.id, toUser.id.toString()],
+      };
+      await StorageService.addConversation(existingConvo);
+    }
+
+    navigation.navigate("Chat", {
+      conversationId: existingConvo.id,
+      conversationName: toUser.display_name || toUser.username,
+      isGroup: false,
+    });
+  };
+
   const renderUser = ({ item }: { item: any }) => {
     const requestSent = sentRequests.has(item.id.toString());
 
@@ -75,13 +111,21 @@ export default function UserSearchScreen() {
           <ThemedText style={styles.userName}>{item.display_name || item.username}</ThemedText>
           <ThemedText style={styles.userUsername}>@{item.username}</ThemedText>
         </View>
-        <Button
-          title={requestSent ? "Sent" : "Add"}
-          onPress={() => sendFriendRequest(item)}
-          disabled={requestSent}
-          variant={requestSent ? "outline" : "primary"}
-          style={styles.addButton}
-        />
+        <View style={styles.actions}>
+          <Pressable
+            onPress={() => startDirectMessage(item)}
+            style={[styles.iconButton, { backgroundColor: theme.primary }]}
+          >
+            <Feather name="message-circle" size={20} color="#FFFFFF" />
+          </Pressable>
+          <Button
+            title={requestSent ? "Sent" : "Add"}
+            onPress={() => sendFriendRequest(item)}
+            disabled={requestSent}
+            variant={requestSent ? "outline" : "primary"}
+            style={styles.addButton}
+          />
+        </View>
       </View>
     );
   };
@@ -179,6 +223,18 @@ const styles = StyleSheet.create({
   userUsername: {
     ...Typography.subhead,
     opacity: 0.7,
+  },
+  actions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  iconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
   },
   addButton: {
     paddingHorizontal: Spacing.lg,

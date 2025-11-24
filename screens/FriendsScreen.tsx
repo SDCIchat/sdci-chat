@@ -89,8 +89,41 @@ export default function FriendsScreen() {
     </View>
   );
 
+  const openDirectMessage = async (friend: Friend) => {
+    if (!user) return;
+
+    // Check if conversation already exists
+    const conversations = await StorageService.getConversations();
+    let existingConvo = conversations.find(
+      (c) =>
+        !c.isGroup &&
+        c.participants.includes(user.id) &&
+        c.participants.includes(friend.id)
+    );
+
+    if (!existingConvo) {
+      // Create new DM conversation
+      const conversationId = `dm_${user.id}_${friend.id}_${Date.now()}`;
+      existingConvo = {
+        id: conversationId,
+        name: friend.displayName,
+        isGroup: false,
+        unreadCount: 0,
+        participants: [user.id, friend.id],
+      };
+      await StorageService.addConversation(existingConvo);
+    }
+
+    navigation.navigate("Chat", {
+      conversationId: existingConvo.id,
+      conversationName: friend.displayName,
+      isGroup: false,
+    });
+  };
+
   const renderFriend = ({ item }: { item: Friend }) => (
     <Pressable
+      onPress={() => openDirectMessage(item)}
       style={({ pressed }) => [
         styles.friendRow,
         { borderBottomColor: theme.border },
