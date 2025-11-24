@@ -106,7 +106,10 @@ export const ApiService = {
   async logout() {
     token = null;
     await AsyncStorage.removeItem('auth_token');
-    if (socket) socket.disconnect();
+    if (socket) {
+      socket.disconnect();
+      socket = null;
+    }
   },
 
   async restoreToken() {

@@ -84,16 +84,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Disconnect socket before logging out
       const socket = ApiService.getSocket();
-      if (socket && user) {
-        ApiService.emitUserOffline(user.id);
+      if (socket) {
         socket.disconnect();
       }
       
-      // Clear all local data
+      // Clear all local data first
       await StorageService.removeUser();
+      
+      // Then logout from API (which also clears token)
       await ApiService.logout();
       
-      // Update state
+      // Finally update state
       setUser(null);
     } catch (error) {
       console.error("Error during sign out:", error);
