@@ -23,6 +23,7 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+  const [lastMessageId, setLastMessageId] = useState<string | null>(null);
 
   useEffect(() => {
     loadMessages();
@@ -39,6 +40,7 @@ export default function ChatScreen() {
             text: msg.text,
             timestamp: new Date(msg.created_at).getTime(),
           };
+          setLastMessageId(newMsg.id);
           setMessages((prev) => [...prev, newMsg]);
         }
       });
@@ -96,6 +98,7 @@ export default function ChatScreen() {
         isOwn={item.senderId === user?.id}
         showSender={isGroup && !item.isSystem && item.senderId !== user?.id}
         isRead={allReadByOthers}
+        animate={item.id === lastMessageId}
       />
     );
   };

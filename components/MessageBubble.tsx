@@ -1,5 +1,5 @@
-import React from "react";
-import { View, StyleSheet } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { View, StyleSheet, Animated } from "react-native";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing } from "@/constants/theme";
@@ -9,10 +9,31 @@ interface MessageBubbleProps {
   message: Message;
   isOwn: boolean;
   showSender?: boolean;
+  animate?: boolean;
 }
 
-export function MessageBubble({ message, isOwn, showSender }: MessageBubbleProps) {
+export function MessageBubble({ message, isOwn, showSender, animate = false }: MessageBubbleProps) {
   const { theme } = useTheme();
+  const fadeAnim = useRef(new Animated.Value(animate ? 0 : 1)).current;
+  const slideAnim = useRef(new Animated.Value(animate ? 20 : 0)).current;
+
+  useEffect(() => {
+    if (animate) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [animate]);
 
   if (message.isSystem) {
     return (
@@ -25,7 +46,16 @@ export function MessageBubble({ message, isOwn, showSender }: MessageBubbleProps
   }
 
   return (
-    <View style={[styles.container, isOwn && styles.ownContainer]}>
+    <Animated.View 
+      style={[
+        styles.container, 
+        isOwn && styles.ownContainer,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        }
+      ]}
+    >
       {!isOwn && showSender ? (
         <ThemedText style={styles.senderName}>{message.senderName}</ThemedText>
       ) : null}
@@ -47,7 +77,7 @@ export function MessageBubble({ message, isOwn, showSender }: MessageBubbleProps
       <ThemedText style={[styles.timestamp, isOwn && styles.ownTimestamp]}>
         {formatTime(message.timestamp)}
       </ThemedText>
-    </View>
+    </Animated.View>
   );
 }
 

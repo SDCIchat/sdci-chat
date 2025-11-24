@@ -16,10 +16,11 @@ const GENERAL_CHAT_ID = "general";
 export default function GeneralChatScreen() {
   const { user } = useAuth();
   const { theme } = useTheme();
-  const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
+  const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
+  const [lastMessageId, setLastMessageId] = useState<string | null>(null);
 
   useEffect(() => {
     loadMessages();
@@ -58,14 +59,16 @@ export default function GeneralChatScreen() {
 
     await StorageService.addMessage(GENERAL_CHAT_ID, newMessage);
     setMessages([...messages, newMessage]);
+    setLastMessageId(newMessage.id); // Set the last message ID for animation
     setInputText("");
   };
 
   const renderMessage = ({ item }: { item: Message }) => (
-    <MessageBubble
-      message={item}
+    <MessageBubble 
+      message={item} 
       isOwn={item.senderId === user?.id}
       showSender={!item.isSystem && item.senderId !== user?.id}
+      animate={item.id === lastMessageId}
     />
   );
 
