@@ -1,7 +1,6 @@
 import { Platform, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import {
   KeyboardAwareScrollView,
   KeyboardAwareScrollViewProps,
@@ -21,10 +20,9 @@ export function ScreenKeyboardAwareScrollView({
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
-  const tabBarHeight = useBottomTabBarHeight();
 
   const paddingTop = headerHeight + Spacing.xl;
-  const paddingBottom = tabBarHeight + Spacing.xl + (tabBarHeight === 0 ? insets.bottom : 0);
+  const paddingBottom = insets.bottom + Spacing.xl;
   const scrollInsetBottom = insets.bottom + 16;
 
   /**
