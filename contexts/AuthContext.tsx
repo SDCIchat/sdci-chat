@@ -81,9 +81,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await ApiService.logout();
-    await StorageService.removeUser();
-    setUser(null);
+    try {
+      // Disconnect socket before logging out
+      const socket = ApiService.getSocket();
+      if (socket && user) {
+        ApiService.emitUserOffline(user.id);
+        socket.disconnect();
+      }
+      
+      // Clear all local data
+      await StorageService.removeUser();
+      await ApiService.logout();
+      
+      // Update state
+      setUser(null);
+    } catch (error) {
+      console.error("Error during sign out:", error);
+      // Even if there's an error, clear local state
+      await StorageService.removeUser();
+      setUser(null);
+    }
   };
 
   const updateUser = async (updates: Partial<User>) => {

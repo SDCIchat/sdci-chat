@@ -42,21 +42,21 @@ export const ApiService = {
       console.log('Attempting to register at:', `${BACKEND_URL}/api/auth/register`);
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
-      
+
       const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, displayName, password }),
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       if (!response.ok) {
         const errorData = await parseJSON(response);
         throw new Error(errorData.error || `Registration failed with status ${response.status}`);
       }
-      
+
       const data = await parseJSON(response);
       if (data.token) {
         token = data.token;
@@ -75,21 +75,21 @@ export const ApiService = {
       console.log('Attempting to login at:', `${BACKEND_URL}/api/auth/login`);
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
-      
+
       const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       if (!response.ok) {
         const errorData = await parseJSON(response);
         throw new Error(errorData.error || `Login failed with status ${response.status}`);
       }
-      
+
       const data = await parseJSON(response);
       if (data.token) {
         token = data.token;
@@ -166,7 +166,7 @@ export const ApiService = {
   // Socket.io
   connectSocket() {
     if (socket) return socket;
-    
+
     socket = io(BACKEND_URL, {
       auth: { token },
       reconnection: true,
