@@ -1,11 +1,13 @@
 import { Platform, StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useHeaderHeight } from "@react-navigation/elements";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import {
   KeyboardAwareScrollView,
   KeyboardAwareScrollViewProps,
 } from "react-native-keyboard-controller";
 
 import { useTheme } from "@/hooks/useTheme";
-import { useScreenInsets } from "@/hooks/useScreenInsets";
 import { Spacing } from "@/constants/theme";
 import { ScreenScrollView } from "./ScreenScrollView";
 
@@ -17,7 +19,13 @@ export function ScreenKeyboardAwareScrollView({
   ...scrollViewProps
 }: KeyboardAwareScrollViewProps) {
   const { theme } = useTheme();
-  const { paddingTop, paddingBottom, scrollInsetBottom } = useScreenInsets();
+  const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
+  const tabBarHeight = useBottomTabBarHeight();
+
+  const paddingTop = headerHeight + Spacing.xl;
+  const paddingBottom = tabBarHeight + Spacing.xl + (tabBarHeight === 0 ? insets.bottom : 0);
+  const scrollInsetBottom = insets.bottom + 16;
 
   /**
    * KeyboardAwareScrollView isn't compatible with web (it relies on native APIs), so the code falls back to ScreenScrollView on web to avoid runtime errors.
