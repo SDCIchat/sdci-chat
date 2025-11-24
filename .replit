@@ -45,6 +45,10 @@ externalPort = 4200
 localPort = 39989
 externalPort = 5173
 
+[[ports]]
+localPort = 43133
+externalPort = 8000
+
 [workflows]
 runButton = "Start Expo (LAN)"
 
@@ -130,3 +134,5 @@ value = "0"
 
 [userenv.shared]
 EXPO_PUBLIC_BACKEND_URL = "https://sdci-chat-backend.onrender.com"
+EXPO_PACKAGER_PROXY_URL = "http://localhost:8081"
+REACT_NATIVE_PACKAGER_HOSTNAME = "localhost"
