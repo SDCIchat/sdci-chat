@@ -4,7 +4,7 @@ import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/Button";
-import { ScreenKeyboardAwareScrollView } from "@/components/ScreenKeyboardAwareScrollView";
+import { ScreenScrollView } from "@/components/ScreenScrollView";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, Typography } from "@/constants/theme";
@@ -51,7 +51,7 @@ export default function AuthScreen() {
   };
 
   return (
-    <ScreenKeyboardAwareScrollView>
+    <ScreenScrollView>
       <View style={styles.container}>
         <View style={styles.header}>
           <ThemedText style={styles.title}>
@@ -127,7 +127,7 @@ export default function AuthScreen() {
           <ThemedText style={styles.cancelText}>Cancel</ThemedText>
         </Pressable>
       </View>
-    </ScreenKeyboardAwareScrollView>
+    </ScreenScrollView>
   );
 }
 
